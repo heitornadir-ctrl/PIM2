@@ -3,6 +3,13 @@
 #include <string.h>
 #include <locale.h> // Para suporte a acentuação
 
+#if defined(_WIN32) || defined(_WIN64)
+    #include <conio.h>
+#else
+    #include <termios.h>
+    #include <unistd.h>
+#endif
+
 #define MAX_LINHA 512
 #define ARQ_USUARIOS "usuarios.csv"
 #define ARQ_TURMAS "turmas.csv"
@@ -14,6 +21,48 @@ void removerBOM(char *linha) {
         (unsigned char)linha[2] == 0xBF) {
         memmove(linha, linha + 3, strlen(linha + 3) + 1);
     }
+}
+
+// Função cross-platform para ler senha sem eco
+void getPassword(char *buf, size_t buflen, const char *prompt) {
+    if (!buf || buflen == 0) return;
+
+    printf("%s", prompt);
+    fflush(stdout);
+
+#if defined(_WIN32) || defined(_WIN64)
+    size_t idx = 0;
+    int ch;
+    while ((ch = _getch()) != '\r' && ch != '\n' && idx + 1 < buflen) {
+        if (ch == '\b') { // backspace
+            if (idx > 0) {
+                idx--;
+                printf("\b \b");
+            }
+        } else {
+            buf[idx++] = (char)ch;
+            // não ecoar caractere
+        }
+    }
+    buf[idx] = '\0';
+    printf("\n");
+#else
+    struct termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
+    if (fgets(buf, (int)buflen, stdin) == NULL) {
+        buf[0] = '\0';
+    } else {
+        // remove '\n' se existir
+        buf[strcspn(buf, "\n")] = 0;
+    }
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    printf("\n");
+#endif
 }
 
 // Verifica login (somente Admin e Coordenador)
@@ -39,7 +88,9 @@ int verificarLogin(const char *email, const char *senha, char *nome, char *nivel
             if (!campos[i]) break;
         }
 
-        if (strcmp(campos[2], email) == 0 && strcmp(campos[3], senha) == 0 &&
+        // campos[2] = email, campos[3] = senha (arquivo), campos[5] = nivel
+        if (campos[2] && campos[3] && campos[5] &&
+            strcmp(campos[2], email) == 0 && strcmp(campos[3], senha) == 0 &&
             (strcmp(campos[5], "Administrador") == 0 || strcmp(campos[5], "Coordenador") == 0)) {
             strcpy(nome, campos[1]);
             strcpy(nivel, campos[5]);
@@ -73,7 +124,7 @@ int idExisteEValido(int idBusca, const char *nivelEsperado) {
             if (!campos[i]) break;
         }
 
-        if (id == idBusca && strcmp(campos[5], nivelEsperado) == 0) {
+        if (id == idBusca && campos[5] && strcmp(campos[5], nivelEsperado) == 0) {
             fclose(f);
             return 1;
         }
@@ -382,9 +433,8 @@ int main() {
     fgets(email, sizeof(email), stdin);
     email[strcspn(email, "\n")] = 0;
 
-    printf("Senha: ");
-    fgets(senha, sizeof(senha), stdin);
-    senha[strcspn(senha, "\n")] = 0;
+    // agora a senha é lida sem eco
+    getPassword(senha, sizeof(senha), "Senha: ");
 
     if (!verificarLogin(email, senha, nome, nivel)) {
         printf("Acesso negado.\n");

@@ -2,9 +2,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+#include <conio.h>  // Para _getch no Windows
 
 #define MAX_LINHA 256
 #define NOME_ARQUIVO "usuarios.csv"
+
+// Função para ocultar a senha ao digitar
+void lerSenha(char *senha, int max) {
+    int i = 0;
+    char ch;
+    while ((ch = _getch()) != '\r' && i < max - 1) {
+        if (ch == '\b') { // backspace
+            if (i > 0) {
+                i--;
+                printf("\b \b");
+            }
+        } else {
+            senha[i++] = ch;
+            printf("*");
+        }
+    }
+    senha[i] = '\0';
+    printf("\n");
+}
 
 void removerBOM(char *linha) {
     if ((unsigned char)linha[0] == 0xEF &&
@@ -39,7 +59,7 @@ int verificarLogin(FILE *arquivo, const char *emailInput, const char *senhaInput
         linha[strcspn(linha, "\n")] = '\0';
 
         int id, idade;
-        char nome[50], email[50], senha[50], nivelAcesso[20], cursoOuMateria[50];
+        char nome[50], email[50], senha[50], nivelAcesso[20], cursoOuMateria[50], atividade[10];
         float np1, np2, pim, media;
 
         char *token = strtok(linha, ";");
@@ -54,8 +74,9 @@ int verificarLogin(FILE *arquivo, const char *emailInput, const char *senhaInput
         token = strtok(NULL, ";"); if (!token) continue; np2 = atof(token);
         token = strtok(NULL, ";"); if (!token) continue; pim = atof(token);
         token = strtok(NULL, ";"); if (!token) continue; media = atof(token);
+        token = strtok(NULL, ";"); if (!token) continue; strcpy(atividade, token);
 
-        if (strcmp(email, emailInput) == 0 && strcmp(senha, senhaInput) == 0) {
+        if (strcmp(email, emailInput) == 0 && strcmp(senha, senhaInput) == 0 && strcmp(atividade, "Ativo") == 0) {
             strcpy(nivelAcessoRetornado, nivelAcesso);
             strcpy(nomeRetornado, nome);
             return 1;
@@ -69,8 +90,8 @@ void imprimirUsuarios(FILE *arquivo) {
     rewind(arquivo);
 
     printf("\n--- Lista de Usuários ---\n");
-    printf("ID | Nome | Email | Senha | Idade | Nível | Curso | NP1 | NP2 | PIM | Média\n");
-    printf("-------------------------------------------------------------------------------\n");
+    printf("ID | Nome | Email | Senha | Idade | Nível | Curso | NP1 | NP2 | PIM | Média | Atividade\n");
+    printf("--------------------------------------------------------------------------------------------\n");
 
     while (fgets(linha, sizeof(linha), arquivo) != NULL) {
         removerBOM(linha);
@@ -112,40 +133,34 @@ void alterarDadosUsuario(const char *nomeArquivo) {
 
         if (id == numUsuario) {
             encontrado = 1;
-            char *campos[11];
+            char *campos[12];
             char linhaCpy[MAX_LINHA];
             strcpy(linhaCpy, linhas[i]);
             int j = 0;
 
             char *tk = strtok(linhaCpy, ";");
-            while (tk && j < 11) {
+            while (tk && j < 12) {
                 campos[j++] = tk;
                 tk = strtok(NULL, ";");
             }
 
-            if (j < 11) {
+            if (j < 12) {
                 printf("Formato de dados inválido.\n");
                 return;
             }
 
             printf("Dados atuais do usuário %d:\n", numUsuario);
-            printf("1 - Nome: %s\n", campos[1]);
-            printf("2 - Email: %s\n", campos[2]);
-            printf("3 - Senha: %s\n", campos[3]);
-            printf("4 - Idade: %s\n", campos[4]);
-            printf("5 - Nível: %s\n", campos[5]);
-            printf("6 - Curso/Matéria: %s\n", campos[6]);
-            printf("7 - NP1: %s\n", campos[7]);
-            printf("8 - NP2: %s\n", campos[8]);
-            printf("9 - PIM: %s\n", campos[9]);
-            printf("10 - Média: %s\n", campos[10]);
+            for (int c = 1; c <= 10; c++) {
+                printf("%d - %s\n", c, campos[c]);
+            }
+            printf("11 - Atividade: %s\n", campos[11]);
 
             int campoAlterar;
-            printf("Qual campo deseja alterar? (1-10): ");
+            printf("Qual campo deseja alterar? (1-11): ");
             scanf("%d", &campoAlterar);
             getchar();
 
-            if (campoAlterar < 1 || campoAlterar > 10) {
+            if (campoAlterar < 1 || campoAlterar > 11) {
                 printf("Campo inválido.\n");
                 return;
             }
@@ -167,9 +182,10 @@ void alterarDadosUsuario(const char *nomeArquivo) {
                 campos[10] = mediaStr;
             }
 
-            snprintf(linhas[i], MAX_LINHA, "%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s",
+            snprintf(linhas[i], MAX_LINHA, "%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s",
                      campos[0], campos[1], campos[2], campos[3], campos[4],
-                     campos[5], campos[6], campos[7], campos[8], campos[9], campos[10]);
+                     campos[5], campos[6], campos[7], campos[8], campos[9],
+                     campos[10], campos[11]);
             printf("Usuário atualizado com sucesso!\n");
             break;
         }
@@ -200,7 +216,7 @@ int main() {
     setlocale(LC_ALL, "Portuguese_Brazil");
 
     FILE *arquivo;
-    char nome[50], email[50], senha[50], nivelAcesso[20], cursoOuMateria[50];
+    char nome[50], email[50], senha[50], nivelAcesso[20], cursoOuMateria[50], atividade[10];
     int idade, idUsuario = 0;
 
     arquivo = fopen(NOME_ARQUIVO, "r");
@@ -224,8 +240,7 @@ int main() {
         email[strcspn(email, "\n")] = '\0';
 
         printf("Digite a senha: ");
-        fgets(senha, sizeof(senha), stdin);
-        senha[strcspn(senha, "\n")] = '\0';
+        lerSenha(senha, sizeof(senha));
 
         printf("Digite a idade: ");
         scanf("%d", &idade);
@@ -233,8 +248,9 @@ int main() {
 
         strcpy(nivelAcesso, "Administrador");
         strcpy(cursoOuMateria, "-");
+        strcpy(atividade, "Ativo");
 
-        fprintf(arquivo, "1;%s;%s;%s;%d;%s;%s;0;0;0;0\n", nome, email, senha, idade, nivelAcesso, cursoOuMateria);
+        fprintf(arquivo, "1;%s;%s;%s;%d;%s;%s;0;0;0;0;%s\n", nome, email, senha, idade, nivelAcesso, cursoOuMateria, atividade);
         fclose(arquivo);
 
         printf("Administrador criado com sucesso!\n");
@@ -255,11 +271,10 @@ int main() {
     emailLogin[strcspn(emailLogin, "\n")] = '\0';
 
     printf("Senha: ");
-    fgets(senhaLogin, sizeof(senhaLogin), stdin);
-    senhaLogin[strcspn(senhaLogin, "\n")] = '\0';
+    lerSenha(senhaLogin, sizeof(senhaLogin));
 
     if (!verificarLogin(arquivo, emailLogin, senhaLogin, nivelAcessoUsuario, nomeUsuario)) {
-        printf("Login inválido! Encerrando.\n");
+        printf("Login inválido ou usuário inativo! Encerrando.\n");
         fclose(arquivo);
         return 1;
     }
@@ -313,8 +328,7 @@ int main() {
                 email[strcspn(email, "\n")] = '\0';
 
                 printf("Digite a senha: ");
-                fgets(senha, sizeof(senha), stdin);
-                senha[strcspn(senha, "\n")] = '\0';
+                lerSenha(senha, sizeof(senha));
 
                 printf("Digite a idade: ");
                 scanf("%d", &idade);
@@ -356,9 +370,11 @@ int main() {
                     cursoOuMateria[strcspn(cursoOuMateria, "\n")] = '\0';
                 }
 
-                fprintf(arquivo, "%d;%s;%s;%s;%d;%s;%s;%.2f;%.2f;%.2f;%.2f\n",
+                strcpy(atividade, "Ativo");
+
+                fprintf(arquivo, "%d;%s;%s;%s;%d;%s;%s;%.2f;%.2f;%.2f;%.2f;%s\n",
                         idUsuario, nome, email, senha, idade, nivelAcesso,
-                        cursoOuMateria, np1, np2, pim, media);
+                        cursoOuMateria, np1, np2, pim, media, atividade);
                 fflush(arquivo);
 
                 printf("Usuário adicionado com sucesso!\n");

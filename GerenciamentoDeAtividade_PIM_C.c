@@ -11,9 +11,13 @@
 #ifdef _WIN32
 #include <direct.h>
 #include <windows.h>
+#include <conio.h>    // _getch
 #define MKDIR(path) _mkdir(path)
 #else
 #include <unistd.h>
+#include <termios.h>  // controlar echo
+#include <sys/types.h>
+#include <sys/stat.h>
 #define MKDIR(path) mkdir(path, 0700)
 #endif
 
@@ -27,6 +31,50 @@ void criarPastaSeNaoExistir(const char *pasta) {
     if (stat(pasta, &st) == -1) {
         MKDIR(pasta);
     }
+}
+
+/* Função para ler senha sem eco */
+void lerSenha(char *senha, size_t tamanho) {
+#ifdef _WIN32
+    size_t idx = 0;
+    int ch;
+    while ((ch = _getch()) != '\r' && ch != '\n' && idx < tamanho - 1) {
+        if (ch == 8) { // backspace
+            if (idx > 0) {
+                idx--;
+                printf("\b \b");
+            }
+        } else {
+            senha[idx++] = (char)ch;
+            printf("*");
+        }
+    }
+    senha[idx] = '\0';
+    printf("\n");
+#else
+    struct termios oldt, newt;
+    if (tcgetattr(STDIN_FILENO, &oldt) != 0) {
+        // fallback para fgets se não for possível manipular termios
+        if (fgets(senha, tamanho, stdin) != NULL) {
+            senha[strcspn(senha, "\n")] = '\0';
+        } else {
+            senha[0] = '\0';
+        }
+        return;
+    }
+    newt = oldt;
+    newt.c_lflag &= ~(ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
+    if (fgets(senha, tamanho, stdin) != NULL) {
+        senha[strcspn(senha, "\n")] = '\0';
+    } else {
+        senha[0] = '\0';
+    }
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    printf("\n");
+#endif
 }
 
 int verificarLogin(const char *emailInput, const char *senhaInput, char *nivelAcessoRetornado, char *nomeRetornado) {
@@ -168,12 +216,15 @@ int main() {
 
     printf("=== Login ===\n");
     printf("Email: ");
-    fgets(email, sizeof(email), stdin);
+    if (fgets(email, sizeof(email), stdin) == NULL) {
+        printf("Erro na leitura do email.\n");
+        return 1;
+    }
     email[strcspn(email, "\n")] = '\0';
 
     printf("Senha: ");
-    fgets(senha, sizeof(senha), stdin);
-    senha[strcspn(senha, "\n")] = '\0';
+    /* leitura sem eco */
+    lerSenha(senha, sizeof(senha));
 
     if (!verificarLogin(email, senha, nivelAcesso, nome)) {
         printf("Login inválido!\n");
@@ -390,3 +441,4 @@ int main() {
 
     return 0;
 }
+

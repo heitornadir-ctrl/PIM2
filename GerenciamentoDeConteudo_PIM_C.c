@@ -11,6 +11,7 @@
 #ifdef _WIN32
 #include <direct.h>             // Para mkdir no Windows
 #include <windows.h>            // Para configurar console UTF-8 no Windows
+#include <conio.h>              // Para _getch()
 #define MKDIR(path) _mkdir(path)
 #else
 #include <unistd.h>
@@ -21,6 +22,30 @@
 #define ARQUIVO_USUARIOS "usuarios.csv"    // Alterado para CSV
 #define DADOS_ARQUIVOS "dados_arquivos.txt"
 #define BASE_PASTA "cursos"                 // Pasta base para armazenar cursos
+
+// Função para ler senha escondida (Windows)
+#ifdef _WIN32
+void lerSenha(char *senha, int maxLen) {
+    int i = 0;
+    char ch;
+
+    while ((ch = _getch()) != '\r' && i < maxLen - 1) { // '\r' é Enter
+        if (ch == '\b') { // Backspace
+            if (i > 0) {
+                i--;
+                printf("\b \b"); // Apaga o asterisco no console
+            }
+        } else if (ch >= 32 && ch <= 126) { // caracteres imprimíveis
+            senha[i++] = ch;
+            printf("*"); // imprime asterisco
+        }
+    }
+    senha[i] = '\0';
+    printf("\n");
+}
+#else
+// Para sistemas Unix, você pode implementar outra versão usando termios
+#endif
 
 void criarPastaSeNaoExistir(const char *pasta) {
     struct stat st = {0};
@@ -165,8 +190,7 @@ int main() {
     email[strcspn(email, "\n")] = '\0';
 
     printf("Senha: ");
-    fgets(senha, sizeof(senha), stdin);
-    senha[strcspn(senha, "\n")] = '\0';
+    lerSenha(senha, sizeof(senha));  // Aqui usa a função que esconde a senha
 
     if (!verificarLogin(email, senha, nivelAcesso, nome)) {
         printf("Login inválido!\n");
@@ -230,7 +254,7 @@ int main() {
             criarPastaSeNaoExistir(pastaMaterias);
 
             char pastaMateria[400];
-                        snprintf(pastaMateria, sizeof(pastaMateria), "%s/%s", pastaMaterias, materia);
+            snprintf(pastaMateria, sizeof(pastaMateria), "%s/%s", pastaMaterias, materia);
             criarPastaSeNaoExistir(pastaMateria);
 
             criarPastaSeNaoExistir(pastaConteudo);
