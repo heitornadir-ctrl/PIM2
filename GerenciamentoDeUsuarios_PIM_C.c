@@ -49,6 +49,35 @@ int obterUltimoID(FILE *arquivo) {
     return id;
 }
 
+int verificarDuplicatas(FILE *arquivo, const char *nome, const char *email) {
+    char linha[MAX_LINHA];
+    rewind(arquivo);
+
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        removerBOM(linha);
+
+        char *token;
+        char nomeExistente[50], emailExistente[50];
+
+        token = strtok(linha, ";"); // ID
+        if (!token) continue;
+
+        token = strtok(NULL, ";"); // Nome
+        if (!token) continue;
+        strcpy(nomeExistente, token);
+
+        token = strtok(NULL, ";"); // Email
+        if (!token) continue;
+        strcpy(emailExistente, token);
+
+        if (strcmp(nomeExistente, nome) == 0 || strcmp(emailExistente, email) == 0) {
+            return 1; // Nome ou e-mail já existem
+        }
+    }
+
+    return 0; // Não encontrado
+}
+
 int verificarLogin(FILE *arquivo, const char *emailInput, const char *senhaInput,
                    char *nivelAcessoRetornado, char *nomeRetornado) {
     char linha[MAX_LINHA];
@@ -150,6 +179,7 @@ void alterarDadosUsuario(const char *nomeArquivo) {
             }
 
             printf("Dados atuais do usuário %d:\n", numUsuario);
+            printf("ID (não editável): %s\n", campos[0]);
             for (int c = 1; c <= 10; c++) {
                 printf("%d - %s\n", c, campos[c]);
             }
@@ -327,6 +357,12 @@ int main() {
                 fgets(email, sizeof(email), stdin);
                 email[strcspn(email, "\n")] = '\0';
 
+                if (verificarDuplicatas(arquivo, nome, email)) {
+                    printf("Erro: Nome ou e-mail já cadastrados!\n");
+                    idUsuario--;
+                    break;
+                }
+
                 printf("Digite a senha: ");
                 lerSenha(senha, sizeof(senha));
 
@@ -345,6 +381,7 @@ int main() {
 
                 if (!acessoValido) {
                     printf("Nível de acesso inválido!\n");
+                    idUsuario--;
                     break;
                 }
 
