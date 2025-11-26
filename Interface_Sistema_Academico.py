@@ -3857,4 +3857,5 @@ if __name__ == "__main__":
     app.iniciar_lgpd_check()
     app.mainloop()
 
-    #atual 25/11 as 19:22
+
+    #PROJETO FINAL
