@@ -52,7 +52,7 @@ def criar_lgpd_consentimento():
     """Registra o consentimento do usuário em um arquivo."""
     try:
         with open(CONSENT_FILE, "w") as f:
-            f.write("accepted")
+            f.write("Consentimento LGPD Aceito")
     except Exception as e:
         print(f"Erro ao salvar consentimento: {e}")
 
@@ -3857,4 +3857,4 @@ if __name__ == "__main__":
     app.iniciar_lgpd_check()
     app.mainloop()
 
-    #atual 25/11 as 19:22
+    #// PROJETO FINAL
