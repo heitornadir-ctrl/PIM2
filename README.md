@@ -33,7 +33,11 @@ O projeto encontra-se *Finalizado* em sua fase inicial (PIM 2º Semestre), poré
  #👨‍🎓 Contribuidores e Contato
 | Papel | Nome | Contato |
 | *P.O (Product Owner)* | Nicolas Pimentel | npimentels@proton.me / http://linkedin.com/in/nicolas-pimentel-668894200 |
+
 | *Scrum Master* | Heitor Nadir | heitornadir@gmail.com / https://br.linkedin.com/in/heitor-henrique-nadir |
+
 | *Dev 1* | Krigor de Sousa | krigordesousa@gmail.com / https://www.linkedin.com/in/krigor-de-sousa-46017a19b/ |
+
 | *Dev 2* | Maria Isabel | mbranco181@gmail.com / https://www.linkedin.com/in/maria-isabel-branco-299809394 |
+
 | *Dev 3* | Rafael Costa | rafael120506@gmail.com / www.linkedin.com/in/rafael-costa-leite-620aba2a3 |
