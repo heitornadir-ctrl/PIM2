@@ -36,6 +36,7 @@ Os pré-requisitos específicos e o modo de como utilizar cada programa estão d
 O projeto encontra-se *Finalizado* em sua fase inicial (PIM 2º Semestre), porém, futuras atualizações e expansões podem ocorrer caso o resultado seja satisfatório.
 
  #👨‍🎓 Contribuidores e Contato
+ 
 | Papel | Nome | Contato |
 
 | *P.O (Product Owner)* | Nicolas Pimentel | npimentels@proton.me / http://linkedin.com/in/nicolas-pimentel-668894200 |
