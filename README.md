@@ -12,10 +12,15 @@ O programa visa centralizar e simplificar o gerenciamento dos seguintes aspectos
 O projeto é composto por código em múltiplas linguagens (C e Python) e inclui diagramas UML estruturados no Asta e documentação escrita em Word.doc.
 
 # 📂 Arquivos Principais
+
 | Arquivo | Linguagem / Tipo | Descrição |
+
 | `IA_Oficial.py` | Python | Módulo de Inteligência Artificial ou script principal em Python. |
+
 | `InterfaceSistemaAcademico.pyw` | Python (sem console) | Arquivo executável da interface gráfica do usuário (GUI). |
+
 | `ProgramaFinal.c` | C | O código-fonte final da versão em C do sistema. |
+
 | `sistemaAcademico_unificado.h` | C Header | Arquivo de cabeçalho (header) em C para definições e protótipos de funções. |
 
 # 📄 Documentação e Manuais
